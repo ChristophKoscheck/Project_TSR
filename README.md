@@ -5,8 +5,7 @@
 This project involves building a Traffic Sign Recognition system using machine learning techniques. The goal is to develop a model that can accurately identify traffic signs from images, which is a critical component for autonomous vehicles and advanced driver-assistance systems (ADAS).
 
 ## Exercise 
-Abschlussprojekt: Verkehrszeichenerkennung
-Überblick
+### Überblick
 In diesem Projekt werden Sie die Methoden, welche Sie in der Vorlesung kennengelernt haben, nutzen, um Verkehrszeichen zu klassifizieren.
 
 Sie trainieren und validieren ein Modell, damit es Verkehrszeichen auf Basis des [Belgian Traffic Sign Dataset] (https://btsd.ethz.ch/shareddata/) klassifizieren kann.
@@ -18,14 +17,14 @@ Wir haben eine einfache Basislinienimplementierung für die Erkennung mit einem 
 Teil der Abgabe ist auch, dass Sie eine detaillierte Beschreibung Ihrer Umsetzung erstellen. Sie können die von Udacity erstellte Schreibvorlage verwenden und als Ausgangspunkt für Ihre Ausarbeitung nutzen.
 
 Ihre Einreichung sollte vier Dateien umfassen:
+- der Quelltext, entweder als Ipython-Notebook oder direkt als Python-Datei (bei Verwendung von Python, sonst Quelltext in anderen Programmiersprachen mit Verweis auf benötigte Pakete und Installationsanweisung für diese Pakete)
+- der als PDF exportierte Code
+- Einen gezippten Ordner mit Bildern weiterer Verkehrszeichen, die sie im Internet gefunden haben und zur weiteren Validierung nutzen
+- PDF Ihrer Ausarbeitung (Deutsch oder Englisch)
 
-der Quelltext, entweder als Ipython-Notebook oder direkt als Python-Datei (bei Verwendung von Python, sonst Quelltext in anderen Programmiersprachen mit Verweis auf benötigte Pakete und Installationsanweisung für diese Pakete)
-der als PDF exportierte Code
-Einen gezippten Ordner mit Bildern weiterer Verkehrszeichen, die sie im Internet gefunden haben und zur weiteren Validierung nutzen
-PDF Ihrer Ausarbeitung (Deutsch oder Englisch)
 Bitte reichen sie Ihr Ergebnis als E-Mail ein unter ihrem Namen und Matrikelnummer ein. Alternativ ist auch der Verweis per E-Mail auf ein öffentliches Repository wie Github möglich, Dort bitte eine Datei MATRIKELNUMMER einchecken, um den Abgleich mit ihren Studieninfos zu ermöglichen.
 
-Ausarbeitung
+### Ausarbeitung
 Ihre Ausarbeitung sollte nicht nur eine detaillierte Beschreibung Ihrer Umsetzung (ggf. mit Zeilennummernverweisen und Codeschnipseln) und der Qualität Ihrer unterschiedlichen Modelle beinhalten.
 
 Zitieren sie auch wissenschaftliche Aufsätze, deren Methoden sie für ihre Umsetzung adaptiert haben und verweisen sie auf Webseiten nennen, wo sie Anregungen gefunden haben.
@@ -34,23 +33,19 @@ Sie sollten Bilder in Ihre Beschreibung aufnehmen, um zu demonstrieren, wie Ihr 
 
 Ihre Ausarbeitung sollte ca. 15-20 Seiten umfassen. Ein Deckblatt mit Name und Matrikelnummer und Datum ist erforderlich. Die Ausarbeitung kann in Deutsch oder Englisch formuliert sein.
 
-Teilaufgaben
+### Teilaufgaben
 Die Projektaufgaben lassen sich in folgende Teilschritte gliedern:
 
-Laden des Datensatzes
-Exploration, Zusammenfassung und Visualisierung des Datensatzes
-Entwurf, Training und Test mehrer Modellarchitekturen
-Nutzung der Modelle, um Vorhersagen für neue Bilder zu treffen, und die Prognosegüte zu ermitteln.
-Zusammenfassung der Ergebnisse mit einem schriftlichen Bericht
-Abgabetermin
-Geben sie ihr Projekt spätestens am 8. August 2018 ab.
+- Laden des Datensatzes
+- Exploration, Zusammenfassung und Visualisierung des Datensatzes
+- Entwurf, Training und Test mehrer Modellarchitekturen
+- Nutzung der Modelle, um Vorhersagen für neue Bilder zu treffen, und die Prognosegüte zu ermitteln.
+- Zusammenfassung der Ergebnisse mit einem schriftlichen Bericht
 
-Datensatz
+### Datensatz
 Verwenden Sie den auf dem Server in hdd/data/Training und hdd/data/Testing gespeicherten Datensatz oder laden Sie ihn direkt von der Website[Belgian Traffic Sign Dataset] (https://btsd.ethz.ch/shareddata/) auf Ihren Computer herunter.
 
-Logins für den Server erhalten sie separat.
-
-Anmerkung
+### Anmerkung
 Ihre Einreichung wird elektronisch auf Plagiate überprüft.
 
 ## Features
