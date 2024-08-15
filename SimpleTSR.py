@@ -1,51 +1,42 @@
 import os
 import skimage.data
 import skimage.transform
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from skimage import io, transform
+from skimage.transform import resize
+
+
 #
 #    Load Data
 #
 
-
-    
-def load_data(data_dir):
-    """Loads a data set and returns two lists:
-    
-    images: a list of Numpy arrays, each representing an image.
-    labels: a list of numbers that represent the images labels.
-    """
-    labels = []
+def load_data(data_dir, target_size=(32, 32)):
     images = []
-    # Get all subdirectories of data_dir. Each represents a label.
-    directories = [d for d in os.listdir(data_dir) 
-                   if os.path.isdir(os.path.join(data_dir, d))]
+    labels = []
+    for class_dir in os.listdir(data_dir):
+        class_path = os.path.join(data_dir, class_dir)
+        if os.path.isdir(class_path):
+            for f in os.listdir(class_path):
+                if f.endswith('.ppm'):
+                    image = io.imread(os.path.join(class_path, f))
+                    # Resize the image to the target size
+                    image_resized = resize(image, target_size, mode='constant')
+                    images.append(image_resized)
+                    labels.append(int(class_dir))
+    return np.array(images), np.array(labels)
 
-    # Loop through the label directories and collect the data in
-    # two lists, labels and images.
-    for d in directories:
-        # print(d)
-        label_dir = os.path.join(data_dir, d)
-        file_names = [os.path.join(label_dir, f) 
-                      for f in os.listdir(label_dir) if f.endswith(".ppm")]
-        # For each label, load it's images and add them to the images list.
-        # And add the label number (i.e. directory name) to the labels list.
-        for f in file_names:
-            # print(f)
-            images.append(skimage.data.imread(f))
-            labels.append(int(d))
-    print("Unique Labels: {0}\nTotal Images: {1}".format(len(set(labels)), len(images)))
-    return images, labels
 
 
 # Load training and testing datasets.
-if os.name == 'nt':
-    ROOT_PATH = os.path.join("C:\\", "hdd", "data")
-else :
-    ROOT_PATH = os.path.join("hdd","data")
+ROOT_PATH = ""
 train_data_dir = os.path.join(ROOT_PATH, "Training")
 test_data_dir = os.path.join(ROOT_PATH, "Testing")
+
+train_images, train_labels = load_data(train_data_dir)
+test_images, test_labels = load_data(test_data_dir)
 
 # Load Data
 images, labels = load_data(train_data_dir)
@@ -53,69 +44,89 @@ images, labels = load_data(train_data_dir)
 #
 #	Transform images to 32x32 pixels
 #
-# Resize images
-images32 = [skimage.transform.resize(image, (32, 32), mode='constant')
-                for image in images]
-# Check resized images
-for image in images32[:50]:
-    print("shape: {0}, min: {1}, max: {2}".format(image.shape, image.min(), image.max()))
+
+
+# Training Data Generator
+
+training_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+    zoom_range=0.2,
+    width_shift_range=0.3,
+    height_shift_range=0.2,
+    shear_range=0.25,
+    rotation_range=20,
+    horizontal_flip=True,
+    vertical_flip=True,
+    brightness_range=[0.8,1.2],
+    fill_mode='nearest'
+)
+train_generator = training_datagen.flow(train_images,train_labels,batch_size=32)
+
 # Model training
-#
+def conv_net(train_images_dims,num_of_classes,filter_size = 2, num_convolutions=64,num_strides=2):
+
+     # pre process image dimensions
+  if (len(train_images_dims) == 3):    # Channel Last
+    train_images_dims = (train_images_dims[1],train_images_dims[2])
+  elif (len(train_images_dims) == 4):
+    train_images_dims = (train_images_dims[1],train_images_dims[2],train_images_dims[3])
+
+    model = tf.keras.Sequential()
+
+    model.add(tf.keras.layers.Conv2D(num_convolutions, (filter_size, filter_size), activation='relu', input_shape=(32, 32, 3)))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=num_strides))
+
+    model.add(tf.keras.layers.Conv2D(num_convolutions * 2, (filter_size, filter_size), activation='relu'))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=num_strides))
+
+    model.add(tf.keras.layers.Conv2D(num_convolutions * 4, (filter_size, filter_size), activation='relu'))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides= num_strides))
+
+    model.add(tf.keras.layers.Conv2D(num_convolutions * 8, (filter_size, filter_size), activation='relu'))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides= num_strides))
+
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(1024, activation='relu'))
+    model.add(tf.keras.layers.Dropout(0.4))
+
+    model.add(tf.keras.layers.Dense(num_of_classes, activation='softmax'))
+
+    model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+    
+    return model
 
 
-labels_a = np.array(labels)
-images_a = np.array(images32)
-print("labels: ", labels_a.shape, "\nimages: ", images_a.shape)
+monitor = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss',patience = 8,restore_best_weights = True, min_delta = 0.01)
+
+model_regularized = conv_net(train_images.shape,len(set(train_labels)),filter_size=2,num_convolutions=512)
+
+model_regularized.compile(optimizer=tf.keras.optimizers.Adam(), loss='sparse_categorical_crossentropy',metrics = ['accuracy'])
+model_regularized.summary()
 
 
-# Create a graph to hold the model.
-graph = tf.Graph()
+history = model_regularized.fit(train_generator, validation_data=train_generator,steps_per_epoch=(len(train_images) / 32),epochs = 15,verbose=1,callbacks=[monitor])  # 32 = batch size
 
-# Create model in the graph.
-with graph.as_default():
-    # Placeholders for inputs and labels.
-    images_ph = tf.placeholder(tf.float32, [None, 32, 32, 3])
-    labels_ph = tf.placeholder(tf.int32, [None])
-    # Flatten input from: [None, height, width, channels]
-    # To: [None, height * width * channels] == [None, 3072]
-    images_flat = tf.contrib.layers.flatten(images_ph)
-    # Fully connected layer. 
-    # Generates logits of size [None, 62]
-    logits = tf.contrib.layers.fully_connected(images_flat, 62, tf.nn.relu)
-    # Convert logits to label indexes (int).
-    # Shape [None], which is a 1D vector of length == batch_size.
-    predicted_labels = tf.argmax(logits, 1)
-    # Define the loss function. 
-    # Cross-entropy is a good choice for classification.
-    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels_ph))
-    # Create training op.
-    train = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
-    # And, finally, an initialization op to execute before training.
-    init = tf.global_variables_initializer()
-# Create a session to run the graph we created.
-session = tf.Session(graph=graph)
+# Get training and test loss histories
+training_loss = history.history['loss']
+validation_loss = history.history['val_loss']
+
+# Create count of the number of epochs
+epoch_count = range(1, len(training_loss) + 1)
+
+# Visualize loss history
+plt.plot(epoch_count, training_loss, 'r--')
+plt.plot(epoch_count, validation_loss, 'b-')
+plt.legend(['Training Loss', 'Validation Loss'])
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.show()
+
+# SAVE THE MODEL AS H5 File (e.g. to use in an app)
+model_regularized.save('final_model.h5')
+
 # First step is always to initialize all variables. 
 # We don't care about the return value, though. It's None.
-_ = session.run([init])
-for i in range(401):
-    _, loss_value = session.run([train, loss], 
-                                feed_dict={images_ph: images_a, labels_ph: labels_a})
-    if i % 10 == 0:
-        print("Loss: ", loss_value)
-#
-#	Predictions
-#
-# Load the test dataset.
-test_images, test_labels = load_data(test_data_dir)
-# Transform the images, just like we did with the training set.
-test_images32 = [skimage.transform.resize(image, (32, 32), mode='constant')
-                 for image in test_images]
-# Run predictions against the full test set.
-predicted = session.run([predicted_labels], 
-                        feed_dict={images_ph: test_images32})[0]
-# Calculate how many matches we got.
-match_count = sum([int(y == y_) for y, y_ in zip(test_labels, predicted)])
-accuracy = match_count / len(test_labels)
-print("Accuracy: {:.3f}".format(accuracy))
-# Close the session. This will destroy the trained model.
-session.close()
+# Load validation data
+val_data_dir = os.path.join(ROOT_PATH, "Validation")
+val_images, val_labels = load_data(val_data_dir)
