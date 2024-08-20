@@ -20,6 +20,7 @@ resolution = 128
 batch_size = 32
 epochs = 15
 
+
 ## Code to ensure an GPU is used when avaiblabe to process the Data (Works for AMD, Intel and, Nvidia GPUs)
 # Ensure TensorFlow-DirectML is being used (Native Linux or Windows Subystem for Linux)
 print("TensorFlow version:", tf.__version__)
@@ -53,6 +54,8 @@ def load_data(data_dir, target_size=(resolution, resolution)):  # You can adjust
                     labels.append(int(class_dir))
     return np.array(images), np.array(labels)
 
+
+
 # Load training and testing datasets
 ROOT_PATH = "/home/paul/TSR"                                	# Use in Windows Subsystem for Linux
 # ROOT_PATH = ""                                                # Use this line if you are running the code in the same directory as the dataset
@@ -78,29 +81,51 @@ validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator()
 training_generator = training_datagen.flow(train_images, train_labels, batch_size=batch_size)
 validation_datagen = validation_datagen.flow(test_images, test_labels, batch_size=batch_size)
 
-# Display the first image in the training dataset
-plt.imshow(train_images[0])
-plt.get_current_fig_manager().set_window_title('Train Image Modell {}'.format(modell_nummer))
-plt.title('Train Image Modell {}'.format(modell_nummer))
-plt.show()
-print("Image shape:", train_images[0].shape)
-print("Label:", train_labels[0])
 
-# Display the first image in the testing dataset
-plt.imshow(test_images[0])
-plt.get_current_fig_manager().set_window_title('Test Image Model {}'.format(modell_nummer))
-plt.title('Test Image Model {}'.format(modell_nummer))
-plt.show()
-print("Image shape:", test_images[0].shape)
-print("Label:", test_labels[0])
+# Berechne die Summe aller Trainingsbilder
+total_train_images = len(train_images)
 
+
+# Function to display the number of classes, list them and count the number of images in each class
+def display_classes(data_dir):
+    classes = os.listdir(data_dir)
+    print("Number of classes:", len(classes))
+    for class_name in classes:
+        class_path = os.path.join(data_dir, class_name)
+        if os.path.isdir(class_path):
+            print(class_name, ":", len(os.listdir(class_path)), "images")
+
+# Example usage with the training data directory
+display_classes(train_data_dir)
+
+
+# Ausgabe der Gesamtanzahl der Trainingsbilder
+print("Gesamtanzahl der Trainingsbilder:", total_train_images)
+
+
+### Display the first image in the training dataset
+#plt.imshow(train_images[0])
+#plt.get_current_fig_manager().set_window_title('Train Image Modell {}'.format(modell_nummer))
+#plt.title('Train Image Modell {}'.format(modell_nummer))
+#plt.show()
+#print("Image shape:", train_images[0].shape)
+#print("Label:", train_labels[0])
+##
+### Display the first image in the testing dataset
+#plt.imshow(test_images[0])
+#plt.get_current_fig_manager().set_window_title('Test Image Model {}'.format(modell_nummer))
+#plt.title('Test Image Model {}'.format(modell_nummer))
+#plt.show()
+#print("Image shape:", test_images[0].shape)
+#print("Label:", test_labels[0])
+#
 # Normalize the images
 train_images = train_images / 255.0
 test_images = test_images / 255.0
 
 # Convolutional Neural Network
 
-def conv_net(train_images_dims, num_classes, batch_size=batch_size):
+def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size = 4, pool_size=(2, 2)):
     # Preprocess image dimensions
         if len(train_images_dims) == 3:  # Assuming channel last format
             input_shape = (train_images_dims[0], train_images_dims[1], train_images_dims[2])
@@ -111,18 +136,17 @@ def conv_net(train_images_dims, num_classes, batch_size=batch_size):
 
         # Define the model
         model = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=input_shape),
+            tf.keras.layers.Conv2D((32),(5,5),activation='relu',input_shape= train_images_dims),
             tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
             tf.keras.layers.BatchNormalization(),
             #tf.keras.layers.Dropout(0.4),
-            tf.keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'),
+            tf.keras.layers.Conv2D((64),(5,5),activation='relu',input_shape= train_images_dims),
             tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
             tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'),
+            tf.keras.layers.Conv2D((64),(3,3),activation='relu',input_shape= train_images_dims),
             tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
             tf.keras.layers.BatchNormalization(),
-            #tf.keras.layers.Conv2D(128, kernel_size=(3, 3), activation='relu'),
-            #tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+            tf.keras.layers.Dropout(0.4),
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(1024, activation='relu'),
             tf.keras.layers.BatchNormalization(),
@@ -148,6 +172,7 @@ model_regulation.compile(optimizer=tf.keras.optimizers.Adam(), loss='sparse_cate
 model_regulation.summary()
 
 history = model_regulation.fit(train_images, train_labels, validation_data=(test_images, test_labels),steps_per_epoch=(len(train_images) / batch_size), epochs=epochs, callbacks=[monitored])
+
 
 # Get training and test loss histories
 training_loss = history.history['loss']

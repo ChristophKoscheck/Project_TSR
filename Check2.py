@@ -1,73 +1,44 @@
 import tensorflow as tf
 import numpy as np
-from keras.models import load_model
 import matplotlib.pyplot as plt
+import os
 from skimage import io, transform
-from skimage.transform import resize
-import matplotlib.pyplot as plt
-
+from keras.models import load_model
 
 # Define Parameters
-
-resolution = 64
+resolution = 128
 modell_nummer = 4
+model_path = f'/home/paul/TSR/Test_Model_{modell_nummer}.h5'
 
 # Load your trained model
-model = load_model('/home/paul/TSR/Test_Model_{}.h5'.format(modell_nummer))
+model = load_model(model_path)
 
-# Define the path to the image
-image_path = '/home/paul/TSR/OwnTestPics/images.jpg' 
+# Define the directory containing the images
+image_dir = '/home/paul/TSR/OwnTestPics'  # Update this path to your image directory
 
 def load_and_preprocess_image(image_path, target_size=(resolution, resolution)):
-    # Load the image using skimage
     image = io.imread(image_path)
-
-    # Resize the image to the target size
     image = transform.resize(image, target_size)
-
-    # Normalize the image to the range [0, 1]
     image = image.astype('float32') / 255.0
-
-    # Add a batch dimension
     image = np.expand_dims(image, axis=0)
-
     return image
 
 def predict_traffic_sign(image_path, model, class_labels):
-    # Load and preprocess the image
     image = load_and_preprocess_image(image_path)
-    
-    # Predict the class probabilities
     predictions = model.predict(image)
-    
-    # Get the predicted class index
     predicted_class_index = np.argmax(predictions, axis=1)[0]
-    
-    # Map the predicted index to the class label
     predicted_class_label = class_labels[predicted_class_index]
-    
     return predicted_class_label
 
-def test_accuracy_on_single_image(image_path, true_label, model, class_labels):
-    predicted_label = predict_traffic_sign(image_path, model, class_labels)
-    
-    # Check if the prediction matches the true label
-    is_correct = predicted_label == true_label
-    
-    # Output the results
-    print(f"True Label: {true_label}")
-    print(f"Predicted Label: {predicted_label}")
-    print(f"Prediction is {'correct' if is_correct else 'incorrect'}.")
-    
-    plt.imshow(io.imread(image_path))
-    plt.title(predicted_label)
-    plt.show()
-
-    return is_correct
-
-
-# Define the true label for the image
-true_label = 'Stop Sign'  # Example: 'Stop Sign'
+def test_accuracy_on_images(image_dir, model, class_labels):
+    for image_file in os.listdir(image_dir):
+        image_path = os.path.join(image_dir, image_file)
+        if image_path.endswith(".jpeg") or image_path.endswith(".jpg"):  # Filter for JPEG or JPG images
+            predicted_label = predict_traffic_sign(image_path, model, class_labels)
+            plt.figure()
+            plt.imshow(io.imread(image_path))
+            plt.title(predicted_label)
+            plt.show()
 
 # Define the list of class labels
 class_labels = {
@@ -135,10 +106,5 @@ class_labels = {
               61: 'Begin of a priority road'
     }
 
-# Test the accuracy on the provided image
-test_accuracy_on_single_image(image_path, true_label, model, class_labels)
-
-def evaluate_traffic_sign(image_path, true_label, model_path, class_labels):
-    model = load_model(model_path)
-    is_correct = test_accuracy_on_single_image(image_path, true_label, model, class_labels)
-    return is_correct
+# Test the model on all images in the directory
+test_accuracy_on_images(image_dir, model, class_labels)
