@@ -33,27 +33,27 @@ def main():
     })
 
     # # Display the first few rows of the dataset
-    # print("First few rows of the dataset:")
-    # print(labels_df.head())
+    print("First few rows of the dataset:")
+    print(labels_df.head())
 
     # # Display the distribution of classes
-    # print("\nDistribution of classes in the dataset:")
-    # print(labels_df['ClassId'].value_counts())
+    print("\nDistribution of classes in the dataset:")
+    print(labels_df['ClassId'].value_counts())
 
     # Plot the distribution of classes
-    # plot_class_distribution(labels_df)
+    plot_class_distribution(labels_df)
 
     # Plot images for classes
-    # plot_images_for_classes(labels_df, train_data_dir, test_data_dir, n_images=sample_image_num)
+    plot_images_for_classes(labels_df, train_data_dir, test_data_dir, n_images=sample_image_num)
 
     # Get and summarize image dimensions
     dimensions_df = get_image_stats(train_data_dir, test_data_dir, labels_df)
 
     # Plot image dimension and aspect ratio distribution
-    # plot_image_stats(dimensions_df)
+    plot_image_stats(dimensions_df)
 
     # Split the data into training and testing sets
-    # train_df, test_df = split_data(labels_df)
+    train_df, test_df = split_data(labels_df)
 
     # Calculate and plot vibrant colors
     vibrant_colors = calculate_vibrant_colors(labels_df, train_data_dir, test_data_dir)
@@ -63,13 +63,13 @@ def main():
     plot_vibrant_color_images(labels_df, train_data_dir, test_data_dir, vibrant_colors, dimensions_df)
 
     # Extract and plot color histograms
-    # plot_color_histograms(labels_df, train_data_dir, test_data_dir)
+    plot_color_histograms(labels_df, train_data_dir, test_data_dir)
 
     # Extract and plot edges
-    # plot_edges(labels_df, train_data_dir, test_data_dir)
+    plot_edges(labels_df, train_data_dir, test_data_dir)
 
     # Augment and plot images
-    # augment_and_plot_images(labels_df, train_data_dir, test_data_dir)
+    augment_and_plot_images(labels_df, train_data_dir, test_data_dir)
 
 # Function Definitions
 def load_data(data_dir, target_size=(resolution, resolution)):  
@@ -362,13 +362,14 @@ def plot_edges(labels_df, train_data_dir, test_data_dir):
 
 def augment_and_plot_images(labels_df, train_data_dir, test_data_dir):
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-        rotation_range=10,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        shear_range=0.15,
-        zoom_range=0.1,
-        horizontal_flip=False,
-        fill_mode='nearest'
+        rotation_range = 12,    # Rotate images by max. 12 degrees
+        width_shift_range = 0.2,    # Shift images horizontally by max. 20%
+        height_shift_range = 0.2,   # Shift images vertically by max. 20%
+        shear_range = 0.1,  # Shear images by max. 20%
+        zoom_range = 0.25,  # Zoom images by max. 25%
+        horizontal_flip = False,    # Do not flip images horizontally
+        vertical_flip = False,  # Do not flip images vertically
+        fill_mode='nearest' # Fill in missing pixels with the nearest value
     )
 
     sample_image_train_path = os.path.join(train_data_dir, labels_df.iloc[0]['Path'])
