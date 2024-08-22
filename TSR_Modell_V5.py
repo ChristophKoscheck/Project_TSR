@@ -9,15 +9,19 @@ from skimage import io, transform
 from skimage.transform import resize
 from sklearn.preprocessing import normalize
 from canvasapi import Canvas
+from skimage.color import rgb2gray
+from keras.callbacks import TensorBoard
+import datetime
+
 
 
 ##Inforamtionen zur Codeversion und der Modellversion
 #Aenderungen hier eingeben:
-modell_nummer = 4
+modell_nummer = 5
 
 # Auflösung
-resolution = 128
-batch_size = 16
+resolution = 64
+batch_size = 32
 epochs = 15
 
 
@@ -55,7 +59,6 @@ def load_data(data_dir, target_size=(resolution, resolution)):  # You can adjust
     return np.array(images), np.array(labels)
 
 
-
 # Load training and testing datasets
 ROOT_PATH = "/home/paul/TSR"                                	# Use in Windows Subsystem for Linux
 # ROOT_PATH = ""                                                # Use this line if you are running the code in the same directory as the dataset
@@ -65,29 +68,42 @@ train_images, train_labels = load_data(train_data_dir)
 test_images, test_labels = load_data(test_data_dir)
 
 
-# Datagenerator
-training_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-    rotation_range=10,
-    width_shift_range=0.3,
-    height_shift_range=0.2,
-    shear_range=0.25,
-    zoom_range=0.2,
-    horizontal_flip=False,
-    fill_mode='nearest')
+# Create an instance of ImageDataGenerator for augmentation
+train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+    rescale=1./255,           # Normalize the image
+    rotation_range=20,        # Random rotation between -20 to +20 degrees
+    width_shift_range=0.2,    # Random horizontal shift
+    height_shift_range=0.2,   # Random vertical shift
+    shear_range=0.2,          # Shear transformations
+    zoom_range=0.2,           # Random zoom
+    horizontal_flip=False,    # Traffic signs should not be flipped horizontally
+    fill_mode='nearest'
+)
 
-validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator()
+test_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)  # Only rescale for testing
 
-# Put Generator into Model
-training_generator = training_datagen.flow(train_images, train_labels, batch_size=batch_size)
-validation_datagen = validation_datagen.flow(test_images, test_labels, batch_size=batch_size)
+# Load images from directories and apply transformations
+train_generator = train_datagen.flow_from_directory(
+    train_data_dir,
+    target_size=(resolution, resolution),  # Adjust depending on your model input
+    batch_size=batch_size,
+    class_mode='categorical'  # Use 'categorical' for multi-class labels
+)
+
+test_generator = test_datagen.flow_from_directory(
+    test_data_dir,
+    target_size=(resolution, resolution),
+    batch_size=batch_size,
+    class_mode='categorical'
+)
 
 
 # Berechne die Summe aller Trainingsbilder
 total_train_images = len(train_images)
 
-# Normalize the images
-train_images = train_images / 255.0
-test_images = test_images / 255.0
+# Log the training process for visualization in TensorBoard
+log_dir = os.path.join("logs", "fit", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
 
 # Convolutional Neural Network
 
@@ -100,40 +116,58 @@ def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size 
         else:
             raise ValueError("Invalid train image dimensions")
 
-        # Define the model
         model = tf.keras.Sequential([
-            tf.keras.layers.Conv2D((64),(7,7),activation='relu',input_shape= train_images_dims),
-            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Conv2D((64),(5,5),activation='relu',input_shape= train_images_dims),
-            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.5),
-            tf.keras.layers.Conv2D((128),(3,3),activation='relu',input_shape= train_images_dims),
-            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(1024, activation='relu'),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dense(num_classes, activation='softmax')
+        # Data Augmentation Layers
+        #tf.keras.layers.RandomTranslation(height_factor=0.1, width_factor=0.1, fill_mode='reflect', interpolation='bilinear'),
+        #tf.keras.layers.RandomRotation(factor=(0, 1), fill_mode='reflect', interpolation='bilinear'),
+        #tf.keras.layers.RandomBrightness(factor=(0.5, 0.7), value_range=(0, 255)),  # Adjusted
+        #tf.keras.layers.RandomContrast(factor=(0, 1)),  # Adjusted
+        #tf.keras.layers.RandomZoom(height_factor=0.2, width_factor=0.2, fill_mode='reflect', interpolation='bilinear'),
+        # Convolutional Layers
+        tf.keras.layers.Conv2D(64, (7, 7), activation='relu', input_shape=train_images_dims, padding='same'),
+        tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Conv2D(64, (5, 5), activation='relu', padding='same'),
+        tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+        tf.keras.layers.BatchNormalization(),
+        #tf.keras.layers.Dropout(0.4),
+        tf.keras.layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
+        tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+        tf.keras.layers.BatchNormalization(),
+        # Dense Layers
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(1024, activation='relu'),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(0.4),
+        tf.keras.layers.Dense(num_classes, activation='softmax')
         ])
 
         # Compile the model
         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
         return model
+
+
 
 # Create the model
 
 monitored = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights=True)
 
-model_regulation = conv_net(train_images[0].shape, len(np.unique(train_labels)))
+model_regulation = conv_net(train_images[0].shape, num_classes=61, batch_size=batch_size)
 
 model_regulation.compile(optimizer=tf.keras.optimizers.Adam(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 model_regulation.summary()
 
-history = model_regulation.fit(train_images, train_labels, validation_data=(test_images, test_labels),steps_per_epoch=(len(train_images) / batch_size), epochs=epochs, callbacks=[monitored])
+
+# Model training
+history = model_regulation.fit(
+    train_generator,
+    steps_per_epoch=train_generator.n // train_generator.batch_size,
+    epochs=epochs,
+    validation_data=test_generator,
+    validation_steps=test_generator.n // test_generator.batch_size, 
+    callbacks=[monitored, tensorboard_callback]
+)
 
 
 # Get training and test loss histories

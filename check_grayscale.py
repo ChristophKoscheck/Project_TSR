@@ -2,11 +2,11 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from skimage import io, transform
+from skimage import io, transform, color
 from keras.models import load_model
 
 # Define Parameters
-resolution = 64
+resolution = 128
 modell_nummer = 5
 model_path = f'/home/paul/TSR/Test_Model_{modell_nummer}.h5'
 
@@ -18,10 +18,12 @@ image_dir = '/home/paul/TSR/Pics'  # Update this path to your image directory
 
 def load_and_preprocess_image(image_path, target_size=(resolution, resolution)):
     image = io.imread(image_path)
-    image = transform.resize(image, target_size)
-    image = image.astype('float32') / 255.0
-    image = np.expand_dims(image, axis=0)
-    return image
+    image_gray = color.rgb2gray(image)  # Convert to grayscale
+    image_resized = transform.resize(image_gray, target_size)
+    image_resized = image_resized.astype('float32') / 255.0
+    image_resized = np.expand_dims(image_resized, axis=-1)  # Add channel dimension for grayscale
+    image_resized = np.expand_dims(image_resized, axis=0)   # Add batch dimension
+    return image_resized
 
 def predict_traffic_sign(image_path, model, class_labels):
     image = load_and_preprocess_image(image_path)
