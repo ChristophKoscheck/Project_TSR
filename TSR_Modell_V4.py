@@ -8,14 +8,17 @@ from sklearn.model_selection import train_test_split
 from skimage import io, transform
 from skimage.transform import resize
 from sklearn.preprocessing import normalize
+from keras.callbacks import TensorBoard
+import datetime
+
 
 ##Inforamtionen zur Codeversion und der Modellversion
 #Aenderungen hier eingeben:
 modell_nummer = 4
 
 # Auflösung
-resolution = 128
-batch_size = 16
+resolution = 64
+batch_size = 32
 epochs = 15
 
 
@@ -55,30 +58,18 @@ def load_data(data_dir, target_size=(resolution, resolution)):  # You can adjust
 
 
 # Load training and testing datasets
-# ROOT_PATH = "/home/paul/TSR"                                	# Use in Windows Subsystem for Linux
-ROOT_PATH = ""                                                # Use this line if you are running the code in the same directory as the dataset
-train_data_dir = os.path.join(ROOT_PATH, "Training")
-test_data_dir = os.path.join(ROOT_PATH, "Testing")
+ROOT_PATH = "/home/paul/TSR"                                	# Use in Windows Subsystem for Linux
+# ROOT_PATH = ""                                                # Use this line if you are running the code in the same directory as the dataset
+#train_data_dir = os.path.join(ROOT_PATH, "Training")
+#test_data_dir = os.path.join(ROOT_PATH, "Testing")
+train_data_dir = os.path.join(ROOT_PATH, "TSR_Data_Train")
+test_data_dir = os.path.join(ROOT_PATH, "TSR_Data_Test")
 train_images, train_labels = load_data(train_data_dir)
 test_images, test_labels = load_data(test_data_dir)
 
-
-# Datagenerator
-training_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-    rotation_range=10,
-    width_shift_range=0.3,
-    height_shift_range=0.2,
-    shear_range=0.25,
-    zoom_range=0.2,
-    horizontal_flip=False,
-    fill_mode='nearest')
-
-validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator()
-
-# Put Generator into Model
-training_generator = training_datagen.flow(train_images, train_labels, batch_size=batch_size)
-validation_datagen = validation_datagen.flow(test_images, test_labels, batch_size=batch_size)
-
+# Callbacks
+log_dir = os.path.join("logs", "fit", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph= True, write_images=True),
 
 # Berechne die Summe aller Trainingsbilder
 total_train_images = len(train_images)
@@ -89,7 +80,7 @@ test_images = test_images / 255.0
 
 # Convolutional Neural Network
 
-def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size = 16, pool_size=(2, 2)):
+def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size = 32, pool_size=(2, 2)):
     # Preprocess image dimensions
         if len(train_images_dims) == 3:  # Assuming channel last format
             input_shape = (train_images_dims[0], train_images_dims[1], train_images_dims[2])
@@ -106,10 +97,10 @@ def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size 
             tf.keras.layers.Conv2D((64),(5,5),activation='relu',input_shape= train_images_dims),
             tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
             tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.5),
             tf.keras.layers.Conv2D((128),(3,3),activation='relu',input_shape= train_images_dims),
             tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
             tf.keras.layers.BatchNormalization(),
+            tf.keras.layers.Dropout(0.5),
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(1024, activation='relu'),
             tf.keras.layers.BatchNormalization(),
@@ -123,7 +114,7 @@ def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size 
 
 # Create the model
 
-monitored = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights=True)
+monitored = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
 
 model_regulation = conv_net(train_images[0].shape, len(np.unique(train_labels)))
 
@@ -131,7 +122,12 @@ model_regulation.compile(optimizer=tf.keras.optimizers.Adam(), loss='sparse_cate
 
 model_regulation.summary()
 
-history = model_regulation.fit(train_images, train_labels, validation_data=(test_images, test_labels),steps_per_epoch=(len(train_images) / batch_size), epochs=epochs, callbacks=[monitored])
+history = model_regulation.fit(
+    train_images, train_labels, 
+    validation_data=(test_images, test_labels),
+    steps_per_epoch=(len(train_images) / batch_size), 
+    epochs=epochs, 
+    callbacks =[monitored, tensorboard_callback])
 
 
 # Get training and test loss histories
@@ -171,5 +167,5 @@ print("Test loss:", test_loss)
 print("Test accuracy:", test_accuracy)
 
 # Save the model
-savepath = "F:/TSR/"
+savepath = "/home/paul/TSR"
 model_regulation.save(os.path.join(savepath, 'Test_Model_{}.h5'.format(modell_nummer)))
