@@ -6,15 +6,15 @@ from skimage import io, transform
 from keras.models import load_model
 
 # Define Parameters
-resolution = 64
-modell_nummer = 5
-model_path = f'/home/paul/TSR/Test_Model_{modell_nummer}.h5'
+resolution = 128
+modell_nummer = 4
+model_path = f'F:/TSR/Test_Model_{modell_nummer}.h5'
 
 # Load your trained model
 model = load_model(model_path)
 
 # Define the directory containing the images
-image_dir = '/home/paul/TSR/Pics'  # Update this path to your image directory
+image_dir = 'OwnTestPics'  # Update this path to your image directory
 
 def load_and_preprocess_image(image_path, target_size=(resolution, resolution)):
     image = io.imread(image_path)
@@ -33,7 +33,7 @@ def predict_traffic_sign(image_path, model, class_labels):
 def test_accuracy_on_images(image_dir, model, class_labels):
     for image_file in os.listdir(image_dir):
         image_path = os.path.join(image_dir, image_file)
-        if image_path.endswith(".jpeg") or image_path.endswith(".jpg"):  # Filter for JPEG or JPG images
+        if image_path.endswith(".jpeg") or image_path.endswith(".jpg"):  # Filter for JPEG or JPG or PNG images
             predicted_label = predict_traffic_sign(image_path, model, class_labels)
             plt.figure()
             plt.imshow(io.imread(image_path))

@@ -8,8 +8,6 @@ from sklearn.model_selection import train_test_split
 from skimage import io, transform
 from skimage.transform import resize
 from sklearn.preprocessing import normalize
-from canvasapi import Canvas
-
 
 ##Inforamtionen zur Codeversion und der Modellversion
 #Aenderungen hier eingeben:
@@ -57,8 +55,8 @@ def load_data(data_dir, target_size=(resolution, resolution)):  # You can adjust
 
 
 # Load training and testing datasets
-ROOT_PATH = "/home/paul/TSR"                                	# Use in Windows Subsystem for Linux
-# ROOT_PATH = ""                                                # Use this line if you are running the code in the same directory as the dataset
+# ROOT_PATH = "/home/paul/TSR"                                	# Use in Windows Subsystem for Linux
+ROOT_PATH = ""                                                # Use this line if you are running the code in the same directory as the dataset
 train_data_dir = os.path.join(ROOT_PATH, "Training")
 test_data_dir = os.path.join(ROOT_PATH, "Testing")
 train_images, train_labels = load_data(train_data_dir)
@@ -173,5 +171,5 @@ print("Test loss:", test_loss)
 print("Test accuracy:", test_accuracy)
 
 # Save the model
-savepath = "/home/paul/TSR"
+savepath = "F:/TSR/"
 model_regulation.save(os.path.join(savepath, 'Test_Model_{}.h5'.format(modell_nummer)))
