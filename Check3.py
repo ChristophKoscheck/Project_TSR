@@ -127,8 +127,8 @@ class_labels = {
               39:'Mandatory divided path for pedestrians and cyclists',
               40:'Parking prohibited',
               41:'Parking and stopping prohibited',
-              42:'-',
-              43:'-',
+              42:'Parking forbidden from the 1st till 15th day of the month',
+              43:'Parking forbidden from the 16th till last day of the month',
               44:'Road narrowing, oncoming drivers have to give way',
               45:'Parking is allowed',
               46:'parking for handicapped',
@@ -140,10 +140,10 @@ class_labels = {
               52:'End of the residential area',
               53:'Road with one-way traffic',
               54:'Dead end street',
-              55:'-',
+              55:'End of roadworks',
               56:'Crossing for pedestrians',
               57:'Crossing for cyclists',
-              58:'Parking exit',
+              58:'Parking lot',
               59:'Information Sign : Speed bump',
               60:'End of the priority road',
               61:'Begin of a priority road'
@@ -183,11 +183,11 @@ plt.ylabel('True Labels')
 plt.title('Confusion Matrix')
 plt.show()
 '''
-
+'''
 def five_wrong_images(targets, predicted_targets, data, class_names):
     count = 0
     for i, e in enumerate(targets):
-        if targets[i] != predicted_targets[i] and count < 10:
+        if targets[i] != predicted_targets[i] and count < 20:
             # Create a directory for misclassifications if it doesn't exist
             if not os.path.exists("fehlklassifikationen"):
                 os.makedirs("fehlklassifikationen")
@@ -196,8 +196,9 @@ def five_wrong_images(targets, predicted_targets, data, class_names):
             true_class = class_names[targets[i]]
             predicted_class = class_names[predicted_targets[i]]
             true_img = Image.open(image_paths[i])
-            img_true=Image.open("./Icons/TSR/{}.jpg".format(targets[i]))
-            img_pred=Image.open("./Icons/TSR/{}.jpg".format(predicted_targets[i]))
+            true_img = true_img.resize((resolution, resolution))
+            img_true=Image.open("./Icons/TSR/{}.png".format(targets[i]))
+            img_pred=Image.open("./Icons/TSR/{}.png".format(predicted_targets[i]))
 
             # Create a subplot with the true class, predicted class, and the true image
             fig, axs = plt.subplots(1, 3, figsize=(12, 4))
@@ -218,38 +219,38 @@ def five_wrong_images(targets, predicted_targets, data, class_names):
             count += 1
 
 five_wrong_images(true_labels, predictions, images, class_names)
-
 '''
-# Iterate through all the layers of the model
+
+# Create a directory to save the filter images if it doesn't exist
+output_dir = "filters"
+os.makedirs(output_dir, exist_ok=True)
+
+# Iterate thru all the layers of the model
 for layer in model.layers:
     if 'conv' in layer.name:
         weights, bias = layer.get_weights()
-
+        
         # Normalize filter values between 0 and 1 for visualization
         f_min, f_max = weights.min(), weights.max()
-        filters = (weights - f_min) / (f_max - f_min)
-
+        filters = (weights - f_min) / (f_max - f_min) 
+        
         print(layer.name, filters.shape)
-        print(filters.shape[3])
-
-        filter_cnt = 1
-
-        # Plotting all the filters
-        fig, axs = plt.subplots(filters.shape[3], filters.shape[0])
-        fig.suptitle(layer.name)
-
-        # Plotting each of the channel, color image RGB channels
-        for i in range(filters.shape[3]):
-            #get the filters
-            filt=filters[:,:,:, i]
-            #plotting each of the channel, color image RGB channels
-            for j in range(3):
-                ax= plt.subplot(filters.shape[3], filters.shape[0], filter_cnt  )
+        
+        n_filters = filters.shape[3]
+        n_channels = filters.shape[2]
+        
+        # Plotting all the filters as densely as possible
+        fig, axs = plt.subplots(n_filters, n_channels, figsize=(n_channels, n_filters))
+        
+        for i in range(n_filters):
+            for j in range(n_channels):
+                ax = axs[i, j]
                 ax.set_xticks([])
                 ax.set_yticks([])
-                plt.imshow(filt[:,:, j],cmap='gray')
-                filter_cnt+=1
-        plt.savefig("filter/{}.png".format(layer.name))  # Save the image in the filter folder
-        plt.show()
+                ax.imshow(filters[:, :, j, i], cmap='gray')
+        
+        # Save the figure with the layer name
+        plt.savefig(os.path.join(output_dir, f"{layer.name}_filters.png"), bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
 
-'''
+
