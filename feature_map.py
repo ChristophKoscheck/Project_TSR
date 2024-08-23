@@ -34,19 +34,20 @@ from PIL import Image
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
 from IPython.display import display
 
-modell_nummer = 4
+modell_nummer = 6
 model_path = f'F:/TSR/Test_Model_{modell_nummer}.h5'
 
 # Load your trained model
 model = load_model(model_path)
 
-img_path='Training/00000/01153_00000.ppm' 
+# img_path='Training/00000/01153_00000.ppm' 
+img_path='F:/TSR/RawTryTest/21/21_0.jpg'
 # Define a new Model, Input= image 
 # Output= intermediate representations for all layers in the  
 # previous model after the first.
 successive_outputs = [layer.output for layer in model.layers[1:]]#visualization_model = Model(img_input, successive_outputs)
 visualization_model = tf.keras.models.Model(inputs = model.input, outputs = successive_outputs)#Load the input image
-img = load_img(img_path, target_size=(128,128,3))# Convert ht image to Array of dimension (32,32,3)
+img = load_img(img_path, target_size=(64,64,3))# Convert ht image to Array of dimension (32,32,3)
 x   = img_to_array(img)                           
 x   = x.reshape((1,) + x.shape)# Rescale by 1/255
 x /= 255.0# Let's run input image through our vislauization network
@@ -80,4 +81,4 @@ for layer_name, feature_map in zip(layer_names, successive_feature_maps):
         plt.title ( layer_name )
         plt.grid  ( False )
         plt.imshow( display_grid, aspect='auto', cmap='gray' )
-        plt.savefig(f'{layer_name}.png')
+        plt.savefig(f'feature_map/{layer_name}.png')
