@@ -18,7 +18,7 @@ import tensorflow as tf
 from skimage import feature
 # ----------------------------------------------------------------------------
 
-resolution = 128
+resolution = 64
 sample_image_num = 3
 
 # Funktionsaufruf
