@@ -18,21 +18,22 @@ import os
 import matplotlib.pyplot as plt
 # ----------------------------------------------------------------------------
 
-# Define Parameters
+# Initialisierung
 resolution = 64
 modell_nummer = 6
 # model_path = f'/home/paul/TSR/Test_Model_{modell_nummer}.h5'
 model_path = f'F:/TSR/Test_Model_{modell_nummer}.h5'
 
-# Load your trained model
+# Laden des trainierten Modells
 model = load_model(model_path)
 
-# Define the directory containing the images
-# image_dir = '/home/paul/TSR/TryTest'  # Update this path to your image directory
-image_dir = 'F:\\TSR\\TryTest'  # Update this path to your image directory
-raw_image_dir = 'F:\\TSR\\RawTryTest'  # Update this path to your image directory
+# Pfad zum eignen Datensatz-Bildverzeichnis
+# image_dir = '/home/paul/TSR/TryTest'  
+image_dir = 'F:\\TSR\\TryTest'  
+raw_image_dir = 'F:\\TSR\\RawTryTest' # Pfad zum Rohdatenverzeichnis
 
-def load_data(data_dir, target_size=(resolution, resolution)):  # You can adjust the target size as needed
+# Laden der Daten
+def load_data(data_dir, target_size=(resolution, resolution)):
     images = []
     labels = []
     for class_dir in os.listdir(data_dir):
@@ -167,11 +168,9 @@ labels = sorted(set(true_labels))
 class_names = [class_labels[label].strip() for label in labels] 
 print(classification_report(true_labels, predictions, labels=labels))
 
-
 # Vorbereiten der Daten für die Confusion Matrix
 unique_labels = sorted(set(class_labels.keys())) 
 class_names_matrix = [class_labels[label].strip() for label in unique_labels]
-
 
 # Confusion Matrix
 cm = confusion_matrix(true_labels, predictions, labels=unique_labels)
