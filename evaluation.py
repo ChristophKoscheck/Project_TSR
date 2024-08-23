@@ -3,36 +3,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.model_selection import train_test_split
 from PIL import Image
-from skimage import io, transform, feature
-from skimage.transform import resize
-from sklearn.preprocessing import normalize
-import seaborn as sns
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
-import tensorflow as tf
-from sklearn.cluster import KMeans
-import numpy as np
-import tensorflow as tf
-import pandas as pd
 from skimage import io
 from skimage.transform import resize
-from skimage.exposure import equalize_adapthist
-from matplotlib import pyplot as plt
-from tensorflow.keras import datasets, layers, models
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
+import tensorflow as tf
 from mlxtend.plotting import plot_confusion_matrix
-from PIL import Image
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
 from IPython.display import display
 
-
-
-
-##Inforamtionen zur Codeversion und der Modellversion
-#Aenderungen hier eingeben:
+# Inforamtionen zur Codeversion und der Modellversion
+# Änderungen hier eingeben:
 modell_nummer = 4
 
 NUM_EPOCHS = 15 # Number of training epochs 

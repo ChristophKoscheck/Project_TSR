@@ -1,12 +1,22 @@
-import os
+##############################################################################
+#                        Exploration des Datensatzes                         #
+##############################################################################
+#  Autoren   : Christoph Koscheck, Paul Smidt                                #
+#  Vorlesung : Künstliche Intelligenz, Verkehrszeichenerkennung              #
+#  Datum     : 23. August 2024                                               #
+##############################################################################
+# ----------------------------------------------------------------------------
 import matplotlib.pyplot as plt
+import os
 import numpy as np
 import pandas as pd
 from PIL import Image
-from skimage import io, feature
+from skimage import io
 from skimage.transform import resize
 import seaborn as sns
 import tensorflow as tf
+from skimage import feature
+# ----------------------------------------------------------------------------
 
 resolution = 128
 sample_image_num = 3
