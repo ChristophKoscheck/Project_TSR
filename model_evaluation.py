@@ -212,7 +212,7 @@ def misclassified_images(targets, predicted_targets, data, class_names):
             axs[2].axis("off")
             
             # Save the subplot as an image in the misclassifications directory
-            plt.savefig("fehlklassifikationen/misclassification_{}.png".format(count))
+            plt.savefig("fehlklassifikationen/misclassification_{}.png".format(cnt))
             plt.close(fig)
             
             cnt += 1
