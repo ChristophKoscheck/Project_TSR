@@ -184,9 +184,9 @@ plt.show()
 
 # Fehlerhafte Klassifikationen
 def misclassified_images(targets, predicted_targets, data, class_names):
-    count = 0
-    for i, e in enumerate(targets):
-        if targets[i] != predicted_targets[i] and count < 20:
+    cnt = 0
+    for i in enumerate(targets):
+        if targets[i] != predicted_targets[i] and cnt < 20:
             # Create a directory for misclassifications if it doesn't exist
             if not os.path.exists("fehlklassifikationen"):
                 os.makedirs("fehlklassifikationen")
@@ -215,11 +215,11 @@ def misclassified_images(targets, predicted_targets, data, class_names):
             plt.savefig("fehlklassifikationen/misclassification_{}.png".format(count))
             plt.close(fig)
             
-            count += 1
+            cnt += 1
 
 misclassified_images(true_labels, predictions, images, class_names)
 
-# Create a directory to save the filter images if it doesn't exist
+# Verzeihnis für die Filter erstellen
 output_dir = "filters"
 os.makedirs(output_dir, exist_ok=True)
 
