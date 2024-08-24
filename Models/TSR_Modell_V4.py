@@ -24,30 +24,26 @@ import io
 #Aenderungen hier eingeben:
 modell_nummer = 4
 
-# Auflösung
+# Parameter
 resolution = 64
-batch_size = 48
-epochs = 1
+batch_size = 32
+epochs = 15
 
-## Code to ensure an GPU is used when avaiblabe to process the Data (Works for AMD, Intel and, Nvidia GPUs)
-# Ensure TensorFlow-DirectML is being used (Native Linux or Windows Subystem for Linux)
+# Code, der sicherstellt, dass eine GPU verwendet wird, wenn sie verfügbar ist, um die Daten zu verarbeiten (funktioniert für AMD, Intel und Nvidia GPUs)
 print("TensorFlow version:", tf.__version__)
 
-# Check for available GPUs to train the model ## Note if more than 1 GPU is available the first GPU will be used
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
-        # Set TensorFlow to use the first GPU if available
         tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
         print("Using GPU:", gpus[0])
     except RuntimeError as e:
-        # Catch and display the error if the GPU setting fails
         print(e)
 else:
     print("No GPU available, using CPU instead.")
 
-#Load Data
-def load_data(data_dir, target_size=(resolution, resolution)):  # You can adjust the target size as needed
+# Einlesen der Daten
+def load_data(data_dir, target_size=(resolution, resolution)): 
     images = []
     labels = []
     for class_dir in os.listdir(data_dir):
@@ -61,7 +57,7 @@ def load_data(data_dir, target_size=(resolution, resolution)):  # You can adjust
                     labels.append(int(class_dir))
     return np.array(images), np.array(labels)
 
-# Load training and testing datasets
+# Lade die Trainings- und Testdaten
 ROOT_PATH = ""                                               
 train_data_dir = os.path.join(ROOT_PATH, "TSR_Data_Train")
 test_data_dir = os.path.join(ROOT_PATH, "TSR_Data_Test")
@@ -71,14 +67,14 @@ test_images, test_labels = load_data(test_data_dir)
 # Berechne die Summe aller Trainingsbilder
 total_train_images = len(train_images)
 
-# Normalize the images
+# Normalisiere die Bilder
 train_images = train_images / 255.0
 test_images = test_images / 255.0
 
 # Convolutional Neural Network
 def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size = 32,):
-    # Preprocess image dimensions
-        if len(train_images_dims) == 3:  # Assuming channel last format
+    # Dimensionen der Trainingsbilder
+        if len(train_images_dims) == 3:
             input_shape = (train_images_dims[0], train_images_dims[1], train_images_dims[2])
         elif len(train_images_dims) == 4:
             input_shape = (train_images_dims[1], train_images_dims[2], train_images_dims[3])
@@ -102,28 +98,23 @@ def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size 
             tf.keras.layers.Dense(num_classes, activation='softmax')
         ])
 
-        # Compile the model
+        # Modelkompilierung
         model.compile(optimizer=tf.keras.optimizers.Adam(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
         return model
 
-# Create the model
-# Path to save the best model
-save_path = os.path.join("Models", f'Test_Model_{modell_nummer}.h5')
+# Modelerstellung
+monitored = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights=True)
 
-#monitored = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
-early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-model_checkpoint = ModelCheckpoint(
-    save_path, 
-    monitor='val_loss', 
-    save_best_only=True, 
-    verbose=1
-)
 model_regulation = conv_net(train_images[0].shape, len(np.unique(train_labels)))
 
-#model_regulation.compile(optimizer=tf.keras.optimizers.Adam(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model_regulation.compile(optimizer=tf.keras.optimizers.Adam(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 model_regulation.summary()
+
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+
+model_regulation = conv_net(train_images[0].shape, len(np.unique(train_labels)))
 
 history = model_regulation.fit(
     train_images, train_labels, 
@@ -131,46 +122,28 @@ history = model_regulation.fit(
     steps_per_epoch=(len(train_images) / batch_size), 
     epochs=epochs,
     batch_size= batch_size,
-    callbacks =[early_stopping, model_checkpoint, TensorBoard(log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))])
+    callbacks =[early_stopping, TensorBoard(log_dir="logs/fit/" + '{}'.format(modell_nummer))])
 
-# Save the model
-# model_regulation.save(os.path.join(save_path, 'Test_Model_{}.h5'.format(modell_nummer)))
-model_regulation.save(save_path)
-# Get training and test loss histories
+# Speichern des Modells
+save_path = os.path.join("Models")
+model_regulation.save(os.path.join(save_path, 'Test_Model_{}.h5'.format(modell_nummer)))
+
+# Trainings- und Testverlust
 training_loss = history.history['loss']
 test_loss = history.history['val_loss']
 
-# Create count of the number of epochs
+# Epochenanzahl
 epoch_count = range(1, len(training_loss) + 1)
 
-# Visualize loss history
-plt.plot(epoch_count, training_loss, 'r--')
-plt.plot(epoch_count, test_loss, 'b-')
-plt.legend(['Training Loss', 'Test Loss'])
-plt.get_current_fig_manager().set_window_title('Loss History for Model {}'.format(modell_nummer))
-plt.title('Loss History for Model {}'.format(modell_nummer))
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.show()
-
-# Get training and test accuracy histories
+# Trainings- und Testgenauigkeit
 training_accuracy = history.history['accuracy']
 test_accuracy = history.history['val_accuracy']
 
-# Visualize accuracy history
-plt.plot(epoch_count, training_accuracy, 'r--')
-plt.plot(epoch_count, test_accuracy, 'b-')
-plt.legend(['Training Accuracy', 'Test Accuracy'])
-plt.get_current_fig_manager().set_window_title('Accuracy History for Model {}'.format(modell_nummer))
-plt.title('Accuracy History for Model {}'.format(modell_nummer))
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.show()
-
-# Evaluate the model
+# Modellevaluierung
 test_loss, test_accuracy = model_regulation.evaluate(test_images, test_labels, verbose=2)
 print("Test loss:", test_loss)
 print("Test accuracy:", test_accuracy)
+
 
 predictions = model_regulation.predict(train_images)
 predicted_classes = np.argmax(predictions, axis=1)
@@ -180,8 +153,8 @@ class_names = [str(i) for i in np.unique(train_labels)]
                
 def plot_confusion_matrix(cm, class_names, normalize=False):
     if normalize:
-        cm = cm.astype('float') / (cm.sum(axis=1)[:, np.newaxis] + np.finfo(float).eps)  # Add epsilon to avoid division by zero
-        cm = np.nan_to_num(cm)  # Replace any NaN values with 0
+        cm = cm.astype('float') / (cm.sum(axis=1)[:, np.newaxis] + np.finfo(float).eps)
+        cm = np.nan_to_num(cm) 
     
     plt.figure(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt=".2f" if normalize else "d", cmap='Blues',
@@ -191,31 +164,31 @@ def plot_confusion_matrix(cm, class_names, normalize=False):
     plt.title('Confusion Matrix')
     plt.show()
 
-# Plot the confusion matrix
+if not os.path.exists("logs/fit/"):
+    os.makedirs("logs/fit/")
+log_dir = "logs/fit/"
+
+# Konfusionsmatrix als Bild
 cm_fig = plot_confusion_matrix(cm, class_names)
 cm_image = io.BytesIO()
 plt.savefig(cm_image, format='png')
 plt.close(cm_fig)
 cm_image.seek(0)
 
-# Convert to tensor
+# Tensorkonvertierung
 image_tensor = tf.image.decode_png(cm_image.getvalue(), channels=4)
 image_tensor = tf.expand_dims(image_tensor, 0)  # Add batch dimension
 
-if not os.path.exists("logs/fit/"):
-    os.makedirs("logs/fit/")
-log_dir = "logs/fit/"
-
-# Log to TensorBoard
+# Tensorboard-Loggings
 with tf.summary.create_file_writer(log_dir).as_default():
     tf.summary.image("Confusion Matrix", image_tensor, step=0)
 
-# Log the classification report
+# Klassifikationsbericht
 report = classification_report(train_labels, predicted_classes, target_names=class_names)
 with tf.summary.create_file_writer(log_dir).as_default():
     tf.summary.text("Classification Report", report, step=0)
 
-# Log histograms for model layers
+# Loggen der Gewichtungen
 for layer in model_regulation.layers:
     for weight in layer.weights:
         tf.summary.histogram(weight.name, weight, step=0)
