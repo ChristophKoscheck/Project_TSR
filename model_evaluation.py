@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 # Initialisierung
 resolution = 64
-modell_nummer = 6
+modell_nummer = 7
 # model_path = f'/home/paul/TSR/Test_Model_{modell_nummer}.h5'
 model_path = f'F:/TSR/Test_Model_{modell_nummer}.h5'
 
@@ -159,7 +159,6 @@ label_csv_path = 'F:/TSR/TryTest/Labels.csv'  # Adjust this to the actual path
 
 # Labels des eignen Datensatzes einlesen und Vorhersagen
 true_labels, predictions, image_paths = read_labels_and_predict(image_dir, model, label_csv_path)
-print(f"Vorhersagen:{predictions}")
 
 # Lables sortieren
 labels = sorted(set(true_labels))
@@ -174,19 +173,20 @@ class_names_matrix = [class_labels[label].strip() for label in unique_labels]
 
 # Confusion Matrix
 cm = confusion_matrix(true_labels, predictions, labels=unique_labels)
-fig, ax = plot_confusion_matrix(conf_mat=cm, figsize=(80, 80), cmap=plt.cm.Blues,
+fig, ax = plot_confusion_matrix(conf_mat=cm, figsize=(45, 45), cmap=plt.cm.Blues,
                                 show_absolute=True, show_normed=True, class_names=class_names_matrix)
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 24})
 plt.xlabel('Vorhergesagte Klasse')
 plt.ylabel('Wahre Klasse')
 plt.title('Confusion Matrix')
-plt.show()
+# plt.show()
+plt.savefig('evaluation/confusion_matrix.png')
 
 # Fehlerhafte Klassifikationen
-def misclassified_images(targets, predicted_targets, data, class_names):
-    cnt = 0
-    for i in enumerate(targets):
-        if targets[i] != predicted_targets[i] and cnt < 20:
+def misclassified_images(targets, predicted_targets, image_paths, class_names):
+    count = 0
+    for i, target in enumerate(targets):
+        if target != predicted_targets[i] and count < 20:
             # Create a directory for misclassifications if it doesn't exist
             if not os.path.exists("fehlklassifikationen"):
                 os.makedirs("fehlklassifikationen")
@@ -212,13 +212,14 @@ def misclassified_images(targets, predicted_targets, data, class_names):
             axs[2].axis("off")
             
             # Save the subplot as an image in the misclassifications directory
-            plt.savefig("fehlklassifikationen/misclassification_{}.png".format(cnt))
+            plt.savefig("fehlklassifikationen/misclassification_{}.png".format(count))
             plt.close(fig)
             
-            cnt += 1
+            count += 1
 
-misclassified_images(true_labels, predictions, images, class_names)
+misclassified_images(true_labels, predictions, image_paths, class_names)
 
+'''
 # Verzeihnis für die Filter erstellen
 output_dir = "filters"
 os.makedirs(output_dir, exist_ok=True)
@@ -248,5 +249,5 @@ for layer in model.layers:
         
         plt.savefig(os.path.join(output_dir, f"{layer.name}_filters.png"), bbox_inches='tight', pad_inches=0)
         plt.close(fig)
-
+'''
 

@@ -14,7 +14,7 @@ from tensorflow.keras.preprocessing.image import img_to_array, load_img
 import matplotlib.image as mpimg
 # ----------------------------------------------------------------------------
 
-modell_nummer = 6
+modell_nummer = 7
 model_path = f'F:/TSR/Test_Model_{modell_nummer}.h5'
 
 # Laden des trainierten Modells
@@ -81,7 +81,7 @@ for i, (layer_name, feature_map) in enumerate(zip(layer_names, successive_featur
 # Kombinieren der Feature Maps in einem Plot
 n_layers = len(image_files)
 
-plt.figure(figsize=(20, n_layers * 2))  # Anpassen der Größe des Plots an die Anzahl der Feature Maps
+plt.figure(figsize=(20, n_layers * 1.1))  # Anpassen der Größe des Plots an die Anzahl der Feature Maps
 
 for i, filename in enumerate(image_files):
     img = mpimg.imread(filename) 
@@ -92,4 +92,5 @@ for i, filename in enumerate(image_files):
 
 plt.tight_layout()
 plt.savefig('feature_map/combined_feature_maps.png')  # Speichern der kombinierten Feature Maps
-plt.show()
+# plt.show()
+plt.close()

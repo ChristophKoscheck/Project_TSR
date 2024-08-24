@@ -154,3 +154,7 @@ cython_debug/
 # Data Packages
 .zip
 *.zip
+TSR_Data_Test
+TSR_Data_Train
+*.h5
+logs

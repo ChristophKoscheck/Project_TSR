@@ -27,6 +27,8 @@ def main():
     ROOT_PATH = "./"
     train_data_dir = os.path.join(ROOT_PATH, "Training")
     test_data_dir = os.path.join(ROOT_PATH, "Testing")
+    # train_data_dir = os.path.join(ROOT_PATH, "TSR_Data_Train")
+    # test_data_dir = os.path.join(ROOT_PATH, "TSR_Data_Test")
 
     train_images, train_labels, train_paths = load_data(train_data_dir)
     test_images, test_labels, test_paths = load_data(test_data_dir)
@@ -37,12 +39,25 @@ def main():
         'ClassId': np.concatenate([train_labels, test_labels])
     })
 
+    labels_df_test = pd.DataFrame({
+        'Path': test_paths,
+        'ClassId': test_labels  
+    })
+
+    labels_df_train = pd.DataFrame({
+        'Path': train_paths,
+        'ClassId': train_labels
+    })
+    
+    plot_class_distribution(labels_df_train, "Trainingsdaten")
+    plot_class_distribution(labels_df_test, "Testdaten")
+    
     # Ausgabe der Klassenverteilung
     print("\nVerteilung der Klassen im Datensatz:")
     print(labels_df['ClassId'].value_counts())
 
     # Visualisierung der Klassenverteilung
-    plot_class_distribution(labels_df)
+    plot_class_distribution(labels_df, "Gesamtdatensatz")
 
     # Visualisierung von Stichproben der Bilder jeder Klasse
     plot_images_for_classes(labels_df, train_data_dir, test_data_dir, n_images=sample_image_num)
@@ -88,21 +103,23 @@ def load_data(data_dir, target_size=(resolution, resolution)):
     return np.array(images), np.array(labels), np.array(paths)
 
 # Visualisierung der Klassenverteilung
-def plot_class_distribution(labels_df):
-    plt.figure(figsize=(12, 6))
+def plot_class_distribution(labels_df, dataset_name):
+    plt.figure(figsize=(16, 6))
     sns.countplot(x='ClassId', data=labels_df, palette='viridis')
-    plt.title('Verteilung der Verkehrszeichenklassen')
+    plt.title('Verteilung der Verkehrszeichenklassen {}'.format(dataset_name))
     plt.xlabel('Klassen-ID')
     plt.ylabel('Anzahl der Bilder')
-    plt.show()
+    # plt.show()
+    plt.savefig(f'exploration/class_distribution_{dataset_name}.png')
+    plt.close()
 
 # Visualisierung von Stichproben der Bilder jeder Klasse
 def plot_images_for_classes(labels_df, train_data_dir, test_data_dir, n_images):
     unique_classes = labels_df['ClassId'].unique()
     n_classes = len(unique_classes)
-    n_cols = min(n_classes, 5*sample_image_num)
+    n_cols = min(n_classes, 7*sample_image_num)
     n_rows = (n_classes * n_images + n_cols - 1) // n_cols + 1
-    plt.figure(figsize=(15, n_rows * 2))
+    plt.figure(figsize=(18, n_rows * 1))
 
     for i, class_id in enumerate(unique_classes):
         class_images = labels_df[labels_df['ClassId'] == class_id]['Path'].values
@@ -122,14 +139,16 @@ def plot_images_for_classes(labels_df, train_data_dir, test_data_dir, n_images):
                 plt.imshow(img)
                 plt.axis('off')
                 if j == 0:
-                    plt.title(f'Class {class_id}')
+                    plt.title(f'Klasse {class_id}')
             except FileNotFoundError as e:
                 print(f"Fehler beim Laden des Bildes: {e}")
                 continue
 
     plt.tight_layout()
     plt.subplots_adjust(top=0.95, bottom=0.0, left=0.2, right=0.8, hspace=0.87, wspace=0.2)
-    plt.show()
+    # plt.show()
+    plt.savefig('exploration/sample_images.png')
+    plt.close()
 
 # Berechnung und Ausgabe des Seitenverhältnisses der Bilder und Pixel-Anzahl
 def get_image_stats(train_data_dir, test_data_dir, labels_df):
@@ -177,7 +196,9 @@ def plot_image_stats(dimensions_df):
     ax2.legend()
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig('exploration/image_stats.png')
+    plt.close()
 
 # Berechnung der dominierenden Farben
 def calculate_vibrant_colors(labels_df, train_data_dir, test_data_dir):
@@ -237,7 +258,9 @@ def plot_vibrant_color_images(labels_df, train_data_dir, test_data_dir, vibrant_
             print(f"Fehler beim Laden des Bildes: {e}")
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig('exploration/vibrant_color_images.png')
+    plt.close()
 
     # Dominante Farben in numerische Werte umwandeln und zur DataFrame hinzufügen
     color_mapping = {'Rot': 0, 'Grün': 1, 'Blau': 2}
@@ -260,7 +283,9 @@ def plot_vibrant_color_images(labels_df, train_data_dir, test_data_dir, vibrant_
     plt.ylabel('Merkmale')
     plt.xticks(ticks=[0.5, 1.5, 2.5, 3.5, 4.5], labels=['Klassen-ID', 'Farbe', 'Breite', 'Höhe', 'Seitenverhältnis'])
     plt.yticks(ticks=[0.5, 1.5, 2.5, 3.5, 4.5], labels=['Klassen-ID', 'Farbe', 'Breite', 'Höhe', 'Seitenverhältnis'])
-    plt.show()
+    # plt.show()
+    plt.savefig('exploration/correlation_matrix.png')
+    plt.close()
 
 # Extrahieren und Visualisieren von Farbhistogrammen (nur zur Veranschaulichung)
 def plot_color_histograms(labels_df, train_data_dir, test_data_dir):
@@ -301,7 +326,9 @@ def plot_color_histograms(labels_df, train_data_dir, test_data_dir):
             continue
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig('exploration/color_histograms.png')
+    plt.close()
 
 # Extrahieren und Visualisieren von Kantenbildern (nur zur Veranschaulichung)
 def plot_edges(labels_df, train_data_dir, test_data_dir):
@@ -342,7 +369,9 @@ def plot_edges(labels_df, train_data_dir, test_data_dir):
             continue
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig('exploration/edges.png')
+    plt.close()
 
 # Visualisierung von augmentierten Bildern (nur zur Veranschaulichung)
 def augment_and_plot_images(labels_df, train_data_dir, test_data_dir):
@@ -384,8 +413,11 @@ def augment_and_plot_images(labels_df, train_data_dir, test_data_dir):
         plt.axis('off')
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig('exploration/augmented_images.png')
+    plt.close()
 
 # Hauptprogramm
 if __name__ == "__main__":
     main()
+    print("Exploration des Datensatzes abgeschlossen.")

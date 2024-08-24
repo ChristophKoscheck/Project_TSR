@@ -20,7 +20,7 @@ import io
 
 ##Inforamtionen zur Codeversion und der Modellversion
 #Aenderungen hier eingeben:
-modell_nummer = 4
+modell_nummer = 8
 
 # Auflösung
 resolution = 64
@@ -64,17 +64,14 @@ def load_data(data_dir, target_size=(resolution, resolution)):  # You can adjust
 
 
 # Load training and testing datasets
-ROOT_PATH = "/home/paul/TSR"                                	# Use in Windows Subsystem for Linux
-# ROOT_PATH = ""                                                # Use this line if you are running the code in the same directory as the dataset
+# ROOT_PATH = "/home/paul/TSR"                                	# Use in Windows Subsystem for Linux
+ROOT_PATH = ""                                                # Use this line if you are running the code in the same directory as the dataset
 #train_data_dir = os.path.join(ROOT_PATH, "Training")
 #test_data_dir = os.path.join(ROOT_PATH, "Testing")
 train_data_dir = os.path.join(ROOT_PATH, "TSR_Data_Train")
 test_data_dir = os.path.join(ROOT_PATH, "TSR_Data_Test")
 train_images, train_labels = load_data(train_data_dir)
 test_images, test_labels = load_data(test_data_dir)
-
-
-
 
 # Berechne die Summe aller Trainingsbilder
 total_train_images = len(train_images)
@@ -84,7 +81,6 @@ train_images = train_images / 255.0
 test_images = test_images / 255.0
 
 # Convolutional Neural Network
-
 def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size = 32,):
     # Preprocess image dimensions
         if len(train_images_dims) == 3:  # Assuming channel last format
@@ -118,7 +114,8 @@ def conv_net(train_images_dims, num_classes, batch_size=batch_size, filter_size 
 
 # Create the model
 # Path to save the best model
-save_path = os.path.join("/home/paul/TSR", f'Test_Model_{modell_nummer}.h5')
+# save_path = os.path.join("/home/paul/TSR", f'Test_Model_{modell_nummer}.h5')
+save_path = os.path.join("F:/TSR/", f'Test_Model_{modell_nummer}.h5')
 
 #monitored = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
 early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
@@ -143,8 +140,8 @@ history = model_regulation.fit(
     callbacks =[early_stopping, model_checkpoint, TensorBoard(log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))])
 
 # Save the model
-model_regulation.save(os.path.join(save_path, 'Test_Model_{}.h5'.format(modell_nummer)))
-
+# model_regulation.save(os.path.join(save_path, 'Test_Model_{}.h5'.format(modell_nummer)))
+model_regulation.save(save_path)
 # Get training and test loss histories
 training_loss = history.history['loss']
 test_loss = history.history['val_loss']
@@ -181,7 +178,6 @@ test_loss, test_accuracy = model_regulation.evaluate(test_images, test_labels, v
 print("Test loss:", test_loss)
 print("Test accuracy:", test_accuracy)
 
-
 predictions = model_regulation.predict(train_images)
 predicted_classes = np.argmax(predictions, axis=1)
 
@@ -209,8 +205,6 @@ def plot_confusion_matrix(cm, class_names, normalize=False):
     plt.title('Confusion Matrix')
     plt.show()
 
-log_dir = "logs/fit/"  # Replace with your log directory
-
 # Plot the confusion matrix
 cm_fig = plot_confusion_matrix(cm, class_names)
 cm_image = io.BytesIO()
@@ -221,6 +215,8 @@ cm_image.seek(0)
 # Convert to tensor
 image_tensor = tf.image.decode_png(cm_image.getvalue(), channels=4)
 image_tensor = tf.expand_dims(image_tensor, 0)  # Add batch dimension
+
+log_dir = "logs/fit/"  # Replace with your log directory
 
 # Log to TensorBoard
 with tf.summary.create_file_writer(log_dir).as_default():
