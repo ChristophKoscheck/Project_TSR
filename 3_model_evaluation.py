@@ -23,7 +23,7 @@ from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 # Initialisierung
 resolution = 64
-modell_nummer = 4
+modell_nummer = 4 # nur Modell 4 ist als .h5 vortrainiert in der Abgabe enthalten, für alle anderen Modell müssen zunächst die entsprechenden Pythonskripte ausgeführt werden
 model_path = f'Models/Test_Model_{modell_nummer}.h5'
 
 # Laden des trainierten Modells
