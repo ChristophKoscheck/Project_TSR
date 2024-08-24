@@ -152,8 +152,6 @@ cython_debug/
 #.idea/
 
 # Data Packages
-.zip
-*.zip
 TSR_Data_Test
 TSR_Data_Train
 logs
